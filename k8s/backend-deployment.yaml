@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: newbank-backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: newbank-backend
+  template:
+    metadata:
+      labels:
+        app: newbank-backend
+    spec:
+      containers:
+      - name: backend
+        image: vaibhav411007/newbank-backend:latest
+        ports:
+        - containerPort: 8080
