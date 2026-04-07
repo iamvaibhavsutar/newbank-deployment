@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  backend:
+    image: vaibhav411007/newbank-app:latest
+    container_name: newbank-backend
+    restart: always
+    ports:
+      - "8081:8080"
+    networks:
+      - newbank-network
+
+  ui:
+    image: vaibhav411007/newbank-ui:latest
+    container_name: newbank-ui
+    restart: always
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - newbank-network
+
+networks:
+  newbank-network:
+    driver: bridge
