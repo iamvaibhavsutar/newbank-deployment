@@ -111,7 +111,7 @@ pipeline {
                         kubectl config use-context k8s-context
 
                         echo "📡 Testing cluster access..."
-                        kubectl get nodes
+                        kubectl get pods
 
                         echo "📂 Checking k8s folder..."
                         ls -l k8s/
