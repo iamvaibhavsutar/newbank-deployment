@@ -3,18 +3,21 @@ pipeline {
 
     stages {
 
-        stage('Pull Latest Images') {
+        stage('Clean Workspace') {
+            steps { cleanWs() }
+        }
+
+        stage('Checkout Deployment Repo') {
             steps {
-                sh 'docker pull vaibhav411007/newbank-app:latest'
-                sh 'docker pull vaibhav411007/newbank-ui:latest'
+                git branch: 'main',
+                url: 'https://github.com/iamvaibhavsutar/newbank-deployment.git'
             }
         }
 
         stage('Deploy via Docker Compose') {
             steps {
                 sh '''
-                cd /home/vaibhav/newbank-docker || exit 1
-                docker-compose down
+                docker-compose down || true
                 docker-compose up -d
                 '''
             }
@@ -22,11 +25,7 @@ pipeline {
     }
 
     post {
-        success {
-            echo '✅ Deployment Completed!'
-        }
-        failure {
-            echo '❌ Deployment Failed!'
-        }
+        success { echo "✅ Deployment Success" }
+        failure { echo "❌ Deployment Failed" }
     }
 }
