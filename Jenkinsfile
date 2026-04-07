@@ -38,7 +38,7 @@ pipeline {
                         echo "🔨 Building Backend Image..."
                         docker build -t $BACKEND_IMAGE:$IMAGE_TAG .
 
-                        echo "🔐 Logging into DockerHub..."
+                        echo "🔐 Docker Login..."
                         echo $PASS | docker login -u $USER --password-stdin
 
                         echo "📤 Pushing Backend Image..."
@@ -94,15 +94,15 @@ pipeline {
                 dir('deployment') {
                     withCredentials([string(credentialsId: 'k8s-token', variable: 'TOKEN')]) {
                         sh '''
-                        echo "🔑 Checking Token..."
-                        echo "Token length: ${#TOKEN}"
+                        echo "🔑 Token length:"
+                        echo ${#TOKEN}
 
                         echo "⚙️ Setting Kubernetes Config..."
                         kubectl config set-cluster k8s \
                         --server=https://192.168.49.2:8443 \
                         --insecure-skip-tls-verify=true
 
-                        kubectl config set-credentials jenkins --token=$TOKEN
+                        kubectl config set-credentials jenkins --token="$TOKEN"
 
                         kubectl config set-context k8s-context \
                         --cluster=k8s \
@@ -110,24 +110,24 @@ pipeline {
 
                         kubectl config use-context k8s-context
 
-                        echo "📡 Testing Cluster Access..."
+                        echo "📡 Testing cluster access..."
                         kubectl get nodes
 
                         echo "📂 Checking k8s folder..."
                         ls -l k8s/
 
-                        echo "🚀 Applying Kubernetes Manifests..."
+                        echo "🚀 Applying manifests..."
                         kubectl apply -f k8s/ --validate=false
 
-                        echo "🔄 Updating Backend Image..."
+                        echo "🔄 Updating backend image..."
                         kubectl set image deployment/newbank-backend \
                         backend=$BACKEND_IMAGE:$IMAGE_TAG
 
-                        echo "🔄 Updating UI Image..."
+                        echo "🔄 Updating UI image..."
                         kubectl set image deployment/newbank-ui \
                         ui=$UI_IMAGE:$IMAGE_TAG
 
-                        echo "📊 Checking Deployment Status..."
+                        echo "📊 Deployment status:"
                         kubectl get pods
                         '''
                     }
@@ -138,7 +138,7 @@ pipeline {
 
     post {
         success {
-            echo "✅ Production Deployment Successful 🚀"
+            echo "✅ Deployment Successful 🚀"
         }
         failure {
             echo "❌ Pipeline Failed - Check Logs 🔍"
