@@ -6,8 +6,6 @@ spec:
   selector:
     app: newbank-ui
   ports:
-    - protocol: TCP
-      port: 3000
-      targetPort: 3000
-      nodePort: 30007
-  type: NodePort
+    - port: 80
+      targetPort: 80
+  type: ClusterIP
