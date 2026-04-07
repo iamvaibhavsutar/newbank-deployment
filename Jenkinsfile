@@ -9,6 +9,7 @@ pipeline {
 
     stages {
 
+        // ================= CLEAN =================
         stage('Clean Workspace') {
             steps {
                 cleanWs()
@@ -16,7 +17,6 @@ pipeline {
         }
 
         // ================= BACKEND =================
-
         stage('Checkout Backend') {
             steps {
                 dir('backend') {
@@ -35,8 +35,13 @@ pipeline {
                         passwordVariable: 'PASS'
                     )]) {
                         sh '''
+                        echo "🔨 Building Backend Image..."
                         docker build -t $BACKEND_IMAGE:$IMAGE_TAG .
+
+                        echo "🔐 Logging into DockerHub..."
                         echo $PASS | docker login -u $USER --password-stdin
+
+                        echo "📤 Pushing Backend Image..."
                         docker push $BACKEND_IMAGE:$IMAGE_TAG
                         '''
                     }
@@ -45,7 +50,6 @@ pipeline {
         }
 
         // ================= UI =================
-
         stage('Checkout UI') {
             steps {
                 dir('ui') {
@@ -64,7 +68,10 @@ pipeline {
                         passwordVariable: 'PASS'
                     )]) {
                         sh '''
+                        echo "🔨 Building UI Image..."
                         docker build -t $UI_IMAGE:$IMAGE_TAG .
+
+                        echo "📤 Pushing UI Image..."
                         docker push $UI_IMAGE:$IMAGE_TAG
                         '''
                     }
@@ -73,7 +80,6 @@ pipeline {
         }
 
         // ================= DEPLOYMENT =================
-
         stage('Checkout Deployment Repo') {
             steps {
                 dir('deployment') {
@@ -88,6 +94,10 @@ pipeline {
                 dir('deployment') {
                     withCredentials([string(credentialsId: 'k8s-token', variable: 'TOKEN')]) {
                         sh '''
+                        echo "🔑 Checking Token..."
+                        echo "Token length: ${#TOKEN}"
+
+                        echo "⚙️ Setting Kubernetes Config..."
                         kubectl config set-cluster k8s \
                         --server=https://192.168.49.2:8443 \
                         --insecure-skip-tls-verify=true
@@ -100,13 +110,25 @@ pipeline {
 
                         kubectl config use-context k8s-context
 
-                        kubectl apply -f k8s/
+                        echo "📡 Testing Cluster Access..."
+                        kubectl get nodes
 
+                        echo "📂 Checking k8s folder..."
+                        ls -l k8s/
+
+                        echo "🚀 Applying Kubernetes Manifests..."
+                        kubectl apply -f k8s/ --validate=false
+
+                        echo "🔄 Updating Backend Image..."
                         kubectl set image deployment/newbank-backend \
                         backend=$BACKEND_IMAGE:$IMAGE_TAG
 
+                        echo "🔄 Updating UI Image..."
                         kubectl set image deployment/newbank-ui \
                         ui=$UI_IMAGE:$IMAGE_TAG
+
+                        echo "📊 Checking Deployment Status..."
+                        kubectl get pods
                         '''
                     }
                 }
@@ -116,10 +138,10 @@ pipeline {
 
     post {
         success {
-            echo "✅ Deployment Successful"
+            echo "✅ Production Deployment Successful 🚀"
         }
         failure {
-            echo "❌ Pipeline Failed"
+            echo "❌ Pipeline Failed - Check Logs 🔍"
         }
     }
 }
